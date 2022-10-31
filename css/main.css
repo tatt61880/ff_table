@@ -7,12 +7,8 @@ body {
   background-color: #ccffff;
 }
 
-div.noselect {
-  user-select: none;
-}
-
 #contents {
-  max-width: 700px;
+  max-width: 580px;
   padding: 0;
   margin: auto;
   text-align: center;
@@ -23,6 +19,10 @@ div.noselect {
   font-size: 0.9rem;
   font-weight: bold;
   color: gray;
+}
+
+div.noselect {
+  user-select: none;
 }
 
 h1 {

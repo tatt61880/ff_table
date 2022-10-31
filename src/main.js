@@ -1,6 +1,6 @@
 (function() {
   'use strict';
-  const version = 'Version: 2022.10.30';
+  const version = 'Version: 2022.11.01';
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const size = 35;
@@ -15,6 +15,18 @@
     elems.svg = document.getElementById('svg-board');
     const g = createG();
     elems.svg.appendChild(g);
+
+    {
+      const rect = createRect({
+        x: 1,
+        y: 1,
+        width: 15,
+        height: 15,
+      });
+      rect.setAttribute('fill', 'white');
+      rect.setAttribute('stroke', 'none');
+      g.appendChild(rect);
+    }
 
     {
       const rect = createRect({
