@@ -1,6 +1,6 @@
 (function() {
   'use strict';
-  const version = 'Version: 2022.11.01';
+  const version = 'Version: 2022.12.04';
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const size = 35;
@@ -54,31 +54,31 @@
 
     for (let y = 0; y <= 16; ++y) {
       const line = createLine({
-        x1: y == 0 ? 1 : 0,
+        x1: y === 0 ? 1 : 0,
         y1: y,
         x2: 16,
         y2: y,
       });
       line.setAttribute('stroke', 'black');
-      line.setAttribute('stroke-width', y == 0 || y % 5 == 1 ? 3 : 1);
+      line.setAttribute('stroke-width', y === 0 || y % 5 === 1 ? 3 : 1);
       g.appendChild(line);
     }
     for (let x = 0; x <= 16; ++x) {
       const line = createLine({
         x1: x,
-        y1: x == 0 ? 1 : 0,
+        y1: x === 0 ? 1 : 0,
         x2: x,
         y2: 16,
       });
       line.setAttribute('stroke', 'black');
-      line.setAttribute('stroke-width', x == 0 || x % 5 == 1 ? 3 : 1);
+      line.setAttribute('stroke-width', x === 0 || x % 5 === 1 ? 3 : 1);
       g.appendChild(line);
     }
 
     for (let y = 0; y < 16; ++y) {
       for (let x = 0; x < 16; ++x) {
-        if (x == 0 || y == 0) {
-          if (x + y != 0) {
+        if (x === 0 || y === 0) {
+          if (x + y !== 0) {
             const text = createText({
               x: x + 0.5,
               y: y + 0.5,
