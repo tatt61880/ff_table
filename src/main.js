@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  const version = 'Version: 2022.12.04';
+  const version = 'v2023.10.29';
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const size = 35;
@@ -35,7 +35,7 @@
         width: 15,
         height: 1,
       });
-      rect.setAttribute('fill', '#ffffdd');
+      rect.setAttribute('fill', '#c0cbff');
       rect.setAttribute('stroke', 'none');
       g.appendChild(rect);
     }
@@ -47,7 +47,7 @@
         width: 1,
         height: 15,
       });
-      rect.setAttribute('fill', '#ffffdd');
+      rect.setAttribute('fill', '#c0cbff');
       rect.setAttribute('stroke', 'none');
       g.appendChild(rect);
     }
@@ -59,7 +59,7 @@
         x2: 16,
         y2: y,
       });
-      line.setAttribute('stroke', 'black');
+      line.setAttribute('stroke', '#000055');
       line.setAttribute('stroke-width', y === 0 || y % 5 === 1 ? 3 : 1);
       g.appendChild(line);
     }
@@ -70,7 +70,7 @@
         x2: x,
         y2: 16,
       });
-      line.setAttribute('stroke', 'black');
+      line.setAttribute('stroke', '#000055');
       line.setAttribute('stroke-width', x === 0 || x % 5 === 1 ? 3 : 1);
       g.appendChild(line);
     }
