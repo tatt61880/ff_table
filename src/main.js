@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  const version = 'v2023.10.29';
+  const version = 'v2024.02.11';
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const size = 35;
