@@ -1,134 +1,255 @@
 (function () {
   'use strict';
-  const version = 'v2024.02.11';
 
-  const SVG_NS = 'http://www.w3.org/2000/svg';
-  const size = 35;
-  const offset = 5;
+  const STORAGE_KEY = 'ff-table-settings-v1';
+  const state = {
+    base: 16,
+    includeZero: false,
+    practice: false,
+    row: 1,
+    column: 1,
+    revealed: false,
+  };
   const elems = {};
+  const cells = [];
+  const headings = [];
 
   window.addEventListener('DOMContentLoaded', init, false);
 
   function init() {
-    elems.version = document.getElementById('version-info');
-    elems.version.innerText = version;
-    elems.svg = document.getElementById('svg-board');
-    const g = createG();
-    elems.svg.appendChild(g);
+    elems.table = document.getElementById('multiplication-table');
+    elems.equation = document.getElementById('equation');
+    elems.equationLabel = document.getElementById('equation-label');
+    elems.comparison = document.getElementById('comparison');
+    elems.reveal = document.getElementById('reveal-answer');
+    elems.zero = document.getElementById('include-zero');
+    elems.practice = document.getElementById('practice-mode');
+    elems.bases = document.querySelectorAll('input[name="base"]');
 
-    {
-      const rect = createRect({
-        x: 1,
-        y: 1,
-        width: 15,
-        height: 15,
+    restoreSettings();
+    elems.zero.checked = state.includeZero;
+    elems.practice.checked = state.practice;
+    elems.bases.forEach((input) => {
+      input.checked = Number(input.value) === state.base;
+      input.addEventListener('change', () => {
+        state.base = Number(input.value);
+        settingsChanged();
       });
-      rect.setAttribute('fill', 'white');
-      rect.setAttribute('stroke', 'none');
-      g.appendChild(rect);
-    }
-
-    {
-      const rect = createRect({
-        x: 1,
-        y: 0,
-        width: 15,
-        height: 1,
-      });
-      rect.setAttribute('fill', '#c0cbff');
-      rect.setAttribute('stroke', 'none');
-      g.appendChild(rect);
-    }
-
-    {
-      const rect = createRect({
-        x: 0,
-        y: 1,
-        width: 1,
-        height: 15,
-      });
-      rect.setAttribute('fill', '#c0cbff');
-      rect.setAttribute('stroke', 'none');
-      g.appendChild(rect);
-    }
-
-    for (let y = 0; y <= 16; ++y) {
-      const line = createLine({
-        x1: y === 0 ? 1 : 0,
-        y1: y,
-        x2: 16,
-        y2: y,
-      });
-      line.setAttribute('stroke', '#000055');
-      line.setAttribute('stroke-width', y === 0 || y % 5 === 1 ? 3 : 1);
-      g.appendChild(line);
-    }
-    for (let x = 0; x <= 16; ++x) {
-      const line = createLine({
-        x1: x,
-        y1: x === 0 ? 1 : 0,
-        x2: x,
-        y2: 16,
-      });
-      line.setAttribute('stroke', '#000055');
-      line.setAttribute('stroke-width', x === 0 || x % 5 === 1 ? 3 : 1);
-      g.appendChild(line);
-    }
-
-    for (let y = 0; y < 16; ++y) {
-      for (let x = 0; x < 16; ++x) {
-        if (x === 0 || y === 0) {
-          if (x + y !== 0) {
-            const text = createText({
-              x: x + 0.5,
-              y: y + 0.5,
-              text: (x + y).toString(16).toUpperCase(),
-            });
-            text.setAttribute('font-weight', 'bold');
-            g.appendChild(text);
-          }
-        } else {
-          const text = createText({
-            x: x + 0.5,
-            y: y + 0.5,
-            text: (x * y).toString(16).toUpperCase(),
-          });
-          g.appendChild(text);
-        }
+    });
+    elems.zero.addEventListener('change', () => {
+      state.includeZero = elems.zero.checked;
+      const minimum = state.includeZero ? 0 : 1;
+      const row = Math.max(minimum, state.row);
+      const column = Math.max(minimum, state.column);
+      if (row !== state.row || column !== state.column) state.revealed = false;
+      state.row = row;
+      state.column = column;
+      settingsChanged();
+    });
+    elems.practice.addEventListener('change', () => {
+      state.practice = elems.practice.checked;
+      state.revealed = false;
+      settingsChanged();
+    });
+    elems.reveal.addEventListener('click', toggleAnswer);
+    elems.table.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-row]');
+      if (button) selectCell(Number(button.dataset.row), Number(button.dataset.column));
+    });
+    elems.table.addEventListener('focusin', (event) => {
+      const button = event.target.closest('button[data-row]');
+      if (button) selectCell(Number(button.dataset.row), Number(button.dataset.column));
+    });
+    elems.table.addEventListener('keydown', onKeyDown);
+    elems.table.addEventListener('pointerover', (event) => {
+      const button = event.target.closest('button[data-row]');
+      if (!state.practice && event.pointerType === 'mouse' && button) {
+        highlight(Number(button.dataset.row), Number(button.dataset.column));
       }
+    });
+    elems.table.addEventListener('pointerleave', () => highlight(state.row, state.column));
+    renderTable();
+    document.getElementById('table-app').hidden = false;
+  }
+
+  function restoreSettings() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (!saved || typeof saved !== 'object') return;
+      if (saved.base === 10 || saved.base === 16) state.base = saved.base;
+      if (typeof saved.includeZero === 'boolean') state.includeZero = saved.includeZero;
+      if (typeof saved.practice === 'boolean') state.practice = saved.practice;
+    } catch {
+      // 保存データが壊れている場合や、保存領域を使えない場合も表を使えるようにする。
     }
   }
 
-  function createG() {
-    const g = document.createElementNS(SVG_NS, 'g');
-    return g;
+  function settingsChanged() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        base: state.base,
+        includeZero: state.includeZero,
+        practice: state.practice,
+      }));
+    } catch {
+      // 保存できなくても、このページ内での設定変更は反映する。
+    }
+    renderTable();
   }
 
-  function createText(param) {
-    const text = document.createElementNS(SVG_NS, 'text');
-    text.setAttribute('x', param.x * size + offset);
-    text.setAttribute('y', param.y * size + offset + 1.5);
-    text.textContent = param.text;
-    text.setAttribute('dominant-baseline', 'middle');
-    text.setAttribute('text-anchor', 'middle');
-    return text;
+  function format(value, base = state.base) {
+    return value.toString(base).toUpperCase();
   }
 
-  function createRect(param) {
-    const rect = document.createElementNS(SVG_NS, 'rect');
-    rect.setAttribute('x', param.x * size + offset);
-    rect.setAttribute('y', param.y * size + offset);
-    rect.setAttribute('width', param.width * size);
-    rect.setAttribute('height', param.height * size);
-    return rect;
+  function equation(row, column, base, showAnswer) {
+    return `${format(row, base)} × ${format(column, base)} = ${showAnswer ? format(row * column, base) : '?'}`;
   }
 
-  function createLine(param) {
-    const line = document.createElementNS(SVG_NS, 'line');
-    line.setAttribute('x1', param.x1 * size + offset);
-    line.setAttribute('y1', param.y1 * size + offset);
-    line.setAttribute('x2', param.x2 * size + offset);
-    line.setAttribute('y2', param.y2 * size + offset);
-    return line;
+  function renderTable() {
+    const first = state.includeZero ? 0 : 1;
+    const fragment = document.createDocumentFragment();
+    const caption = document.createElement('caption');
+    caption.className = 'visually-hidden';
+    caption.textContent = `${state.base}進数の掛け算表`;
+    fragment.appendChild(caption);
+    cells.length = 0;
+    headings.length = 0;
+
+    const head = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    const corner = document.createElement('th');
+    corner.textContent = '×';
+    corner.setAttribute('scope', 'col');
+    corner.setAttribute('aria-label', '行かける列');
+    corner.className = 'corner';
+    headerRow.appendChild(corner);
+    for (let column = first; column <= 15; column++) {
+      headerRow.appendChild(createHeading(column, 'col'));
+    }
+    head.appendChild(headerRow);
+    fragment.appendChild(head);
+
+    const body = document.createElement('tbody');
+    for (let row = first; row <= 15; row++) {
+      const tr = document.createElement('tr');
+      tr.appendChild(createHeading(row, 'row'));
+      for (let column = first; column <= 15; column++) {
+        const cell = document.createElement('td');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.row = row;
+        button.dataset.column = column;
+        button.className = 'cell-button';
+        button.setAttribute('aria-describedby', 'keyboard-help');
+        button.tabIndex = -1;
+        cell.classList.toggle('is-square', row === column);
+        cell.classList.toggle('group-end-column', column % 5 === 0 && column !== 15);
+        cell.classList.toggle('group-end-row', row % 5 === 0 && row !== 15);
+        cell.appendChild(button);
+        tr.appendChild(cell);
+        cells.push({ row, column, cell, button });
+      }
+      body.appendChild(tr);
+    }
+    fragment.appendChild(body);
+    elems.table.replaceChildren(fragment);
+    elems.table.classList.toggle('practice-mode', state.practice);
+    document.getElementById('table-description').textContent = `${format(first)}〜${format(15)}の掛け算`;
+    document.getElementById('practice-help').hidden = !state.practice;
+    elems.reveal.hidden = !state.practice;
+    updateCells();
+    highlight(state.row, state.column);
+  }
+
+  function createHeading(value, scope) {
+    const th = document.createElement('th');
+    th.scope = scope;
+    th.textContent = format(value);
+    const axis = scope === 'row' ? 'row' : 'column';
+    th.classList.toggle(`group-end-${axis}`, value % 5 === 0 && value !== 15);
+    headings.push({ th, value, axis });
+    return th;
+  }
+
+  function updateCells() {
+    for (const { row, column, button, cell } of cells) {
+      const selected = row === state.row && column === state.column;
+      const visible = !state.practice || (selected && state.revealed);
+      button.textContent = visible ? format(row * column) : '?';
+      button.setAttribute('aria-label', `${state.base}進数：${equation(row, column, state.base, visible)}`);
+      button.setAttribute('aria-pressed', String(selected));
+      button.tabIndex = selected ? 0 : -1;
+      cell.classList.toggle('is-selected', selected);
+    }
+    elems.reveal.textContent = state.revealed ? '答えを隠す' : '答えを見る';
+    elems.reveal.setAttribute('aria-expanded', String(state.revealed));
+  }
+
+  function highlight(row, column) {
+    for (const item of cells) {
+      item.cell.classList.toggle('is-crosshair', item.row === row || item.column === column);
+      item.cell.classList.toggle('is-current', item.row === row && item.column === column);
+    }
+    for (const { th, value, axis } of headings) {
+      th.classList.toggle('is-highlighted', value === (axis === 'row' ? row : column));
+    }
+    const visible = !state.practice || state.revealed;
+    elems.equationLabel.textContent = `${state.base}進数${state.practice ? ' · 暗記モード' : ''}`;
+    elems.equation.textContent = equation(row, column, state.base, visible);
+    const alternateBase = state.base === 16 ? 10 : 16;
+    elems.comparison.textContent = visible
+      ? `${alternateBase}進数：${equation(row, column, alternateBase, true)}`
+      : '答えを考えてから、確認してみましょう。';
+  }
+
+  function selectCell(row, column) {
+    if (row !== state.row || column !== state.column) state.revealed = false;
+    state.row = row;
+    state.column = column;
+    updateCells();
+    highlight(row, column);
+  }
+
+  function toggleAnswer() {
+    if (!state.practice) return;
+    state.revealed = !state.revealed;
+    updateCells();
+    highlight(state.row, state.column);
+  }
+
+  function onKeyDown(event) {
+    const button = event.target.closest('button[data-row]');
+    if (!button || event.altKey || event.metaKey) return;
+    let row = Number(button.dataset.row);
+    let column = Number(button.dataset.column);
+    const first = state.includeZero ? 0 : 1;
+    switch (event.key) {
+      case 'ArrowUp': row--; break;
+      case 'ArrowDown': row++; break;
+      case 'ArrowLeft': column--; break;
+      case 'ArrowRight': column++; break;
+      case 'Home':
+        column = first;
+        if (event.ctrlKey) row = first;
+        break;
+      case 'End':
+        column = 15;
+        if (event.ctrlKey) row = 15;
+        break;
+      case 'Enter':
+      case ' ':
+        if (!state.practice) return;
+        event.preventDefault();
+        if (!event.repeat) toggleAnswer();
+        return;
+      default: return;
+    }
+    event.preventDefault();
+    row = Math.max(first, Math.min(15, row));
+    column = Math.max(first, Math.min(15, column));
+    selectCell(row, column);
+    const target = cells.find((item) => item.row === row && item.column === column).button;
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
 })();

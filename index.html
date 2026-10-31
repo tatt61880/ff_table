@@ -4,13 +4,13 @@
 <head>
   <title>FF表</title>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=570">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <meta name="description" content="FF表です。">
+  <meta name="description" content="1〜Fの16進数の掛け算表。マスを選んで計算を確認したり、答えを隠して暗記の練習ができます。">
   <meta property="og:title" content="FF表">
-  <meta property="og:description" content="FF表です。">
+  <meta property="og:description" content="16進数の掛け算を、見て・選んで・覚える。10進数との比較や暗記の練習ができるFF表です。">
 
-  <link rel="icon" type="image/x-icon" href="./images/favicon.png?2023.10.28">
+  <link rel="icon" type="image/png" href="./images/favicon.png?2023.10.28">
   <link rel="apple-touch-icon" sizes="180x180" href="./images/apple-touch-icon.png?2023.10.28">
 
   <link rel="stylesheet" href="./css/main.css">
@@ -19,18 +19,65 @@
 </head>
 
 <body>
-  <div id="contents">
-    <h1>FF表 <span id="version-info">Version: xxxx.xx.xx</span></h1>
+  <main id="contents">
+    <header class="page-header">
+      <div class="title-row">
+        <h1>FF表<span class="subtitle">16進数の掛け算表</span></h1>
+        <span id="version-info">v2026.11.01</span>
+      </div>
+      <p class="intro">九九の、その先へ。1〜Fの掛け算を見て・選んで・覚える。</p>
+    </header>
 
-    <svg id="svg-board" width="570" height="570">
-    </svg>
+    <noscript><p class="notice">表を表示するには、JavaScriptを有効にしてください。</p></noscript>
 
-    <div>
-      <h1>このツールの作者</h1>
-      <a href="https://twitter.com/tatt61880">Tatt(たっと) @tatt61880</a><br>
-      要望などあれば、上記アカウントへどうぞ！<br>
-    </div>
-  </div>
+    <section id="table-app" aria-label="掛け算表" hidden>
+      <div class="toolbar">
+        <fieldset class="base-options">
+          <legend class="visually-hidden">表の表示</legend>
+          <label><input type="radio" name="base" value="16" checked><span>16進数</span></label>
+          <label><input type="radio" name="base" value="10"><span>10進数</span></label>
+        </fieldset>
+        <div class="toggle-options">
+          <label><input id="include-zero" type="checkbox">0の段を表示</label>
+          <label><input id="practice-mode" type="checkbox">暗記モード</label>
+        </div>
+      </div>
+
+      <div class="selection-panel">
+        <div class="calculation" aria-live="polite" aria-atomic="true">
+          <p id="equation-label" class="eyebrow">16進数</p>
+          <p id="equation" class="equation">1 × 1 = 1</p>
+          <p id="comparison" class="comparison">10進数：1 × 1 = 1</p>
+        </div>
+        <button id="reveal-answer" class="answer-button" type="button" hidden>答えを見る</button>
+      </div>
+
+      <div class="table-heading">
+        <p id="table-description">1〜Fの掛け算</p>
+        <span class="table-hint">行 × 列</span>
+      </div>
+      <div id="table-scroll" class="table-scroll">
+        <table id="multiplication-table" aria-describedby="table-help">
+          <caption class="visually-hidden">16進数の掛け算表</caption>
+        </table>
+      </div>
+      <p id="table-help" class="help">マスをタップすると計算を確認できます。表は横にスクロールできます。</p>
+      <p id="keyboard-help" class="help keyboard-help">キーボード：Tabで表へ移動、矢印キーでマスを選択。</p>
+      <p id="practice-help" class="help" hidden>答えを考えてから「答えを見る」を押してください。表の上ではEnter・Spaceでも確認できます。</p>
+    </section>
+
+    <details class="guide">
+      <summary>16進数の読み方</summary>
+      <p>16進数では、0〜9に続いてA・B・C・D・E・Fを使います。Aは10進数の10、Fは15です。その次は桁が上がり、10進数の16を「10」と書きます。</p>
+      <p>たとえば、A × B = 6E。10進数では10 × 11 = 110で、6Eは6 × 16 + 14 = 110を表します。</p>
+      <p>「暗記モード」では表の答えを隠せます。マスを選んで答えを確認し、次のマスへ進んでみてください。</p>
+    </details>
+
+    <footer>
+      <span>作者：<a href="https://twitter.com/tatt61880">Tatt(たっと) @tatt61880</a></span>
+      <a href="https://github.com/tatt61880/ff_table">GitHub</a>
+    </footer>
+  </main>
 </body>
 
 </html>

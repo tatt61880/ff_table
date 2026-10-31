@@ -35,11 +35,8 @@ jobs:
         run: |
           rm -rf dist
           mkdir -p dist
-          rsync -a --delete \
-            --exclude ".git" \
-            --exclude ".github" \
-            --exclude "dist" \
-            ./ dist/
+          cp index.html dist/
+          cp -R css src images dist/
 
       # dist内の .js/.css を name.<hash>.ext にリネームし、HTML参照を更新
       - name: Hash filenames and rewrite HTML
